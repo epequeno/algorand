@@ -2,3 +2,6 @@ node/
 update.sh
 updater
 privnet/net1
+bin/
+testnet/data/
+*tok

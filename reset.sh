@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
-if [ -z "$ALGORAND_HOME" ] || [ -z "$ALGORAND_DATA" ]; then
-	echo "ALGORAND_HOME or ALGORAND_DATA not set"
+if [ -z "${ALGORAND_BIN}" ] || [ -z "${TESTNET_DATA}" ]; then
+	echo "ALGORAND_BIN or TESTNET_DATA not set"
 	exit 1
 fi
 
 
-rm -rf "$ALGORAND_HOME"
+rm -rf "${ALGORAND_BIN}"
+rm -rf "${ROOT_DIR}/testnet/data"
 rm ./updater
 rm ./update.sh

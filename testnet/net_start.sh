@@ -3,8 +3,8 @@
 set -x
 set -e
 
-# shellcheck disable=SC1091
-source "${ALGORAND_HOME}/../common.sh"
+gcmd="${ALGORAND_BIN}/goal -d ${TESTNET_DATA}"
+TESTNET_CATCHUP_URL="https://algorand-catchpoints.s3.us-east-2.amazonaws.com/channel/testnet/latest.catchpoint"
 
-$gcmd -d "${ALGORAND_DATA}" node start
-$gcmd -d "${ALGORAND_DATA}" node catchup "$(curl -s ${TESTNET_CATCHUP_URL})"
+$gcmd node start
+$gcmd node catchup "$(curl -s ${TESTNET_CATCHUP_URL})"

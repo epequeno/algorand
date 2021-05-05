@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091
-source "${ALGORAND_HOME}/../common.sh"
+gcmd="${ALGORAND_BIN}/goal -d ${TESTNET_DATA}"
 
-$gcmd -d "${ALGORAND_DATA}" node status -w 1000
+$gcmd node status -w 1000

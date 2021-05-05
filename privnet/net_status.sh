@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091
-source "${ALGORAND_HOME}/../common.sh"
+set -x
+set -e
 
-PRIVNET_HOME="${ALGORAND_HOME}/../privnet"
+gcmd="${ALGORAND_BIN}/goal -r ${PRIVNET_DATA}"
+
+PRIVNET_HOME="${ROOT_DIR}/privnet"
 PRIVNET_DATA="${PRIVNET_HOME}/net1"
 
-$gcmd network status -r "${PRIVNET_DATA}"
+$gcmd network status

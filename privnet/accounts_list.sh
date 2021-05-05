@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091
-source "${ALGORAND_HOME}/../common.sh"
+set -x
+set -e
 
-PRIVNET_HOME="${ALGORAND_HOME}/../privnet"
+gcmd="${ALGORAND_BIN}/goal"
+
+PRIVNET_HOME="${ROOT_DIR}/privnet"
 PRIVNET_DATA="${PRIVNET_HOME}/net1"
 
 echo "accounts on Primary"

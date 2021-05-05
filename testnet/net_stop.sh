@@ -3,7 +3,6 @@
 set -x
 set -e
 
-# shellcheck disable=SC1091
-source "${ALGORAND_HOME}/../common.sh"
+gcmd="${ALGORAND_BIN}/goal -d ${TESTNET_DATA}"
 
-$gcmd -d "${ALGORAND_DATA}" node stop 
+$gcmd node stop 
