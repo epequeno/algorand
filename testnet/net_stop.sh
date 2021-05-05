@@ -5,4 +5,4 @@ set -e
 
 gcmd="${ALGORAND_BIN}/goal -d ${TESTNET_DATA}"
 
-$gcmd node stop 
+${gcmd} node stop 

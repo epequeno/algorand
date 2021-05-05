@@ -2,4 +2,4 @@
 
 gcmd="${ALGORAND_BIN}/goal -d ${TESTNET_DATA}"
 
-$gcmd node status -w 1000
+${gcmd} node status -w 1000

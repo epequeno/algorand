@@ -3,10 +3,10 @@
 set -x
 set -e
 
-gcmd="${ALGORAND_BIN}/goal"
-
 PRIVNET_HOME="${ROOT_DIR}/privnet"
 PRIVNET_DATA="${PRIVNET_HOME}/net1"
+
+gcmd="${ALGORAND_BIN}/goal"
 
 echo "accounts on Primary"
 $gcmd account list -d "${PRIVNET_DATA}/Primary"

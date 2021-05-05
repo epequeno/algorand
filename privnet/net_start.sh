@@ -8,4 +8,4 @@ PRIVNET_DATA="${PRIVNET_HOME}/net1"
 
 gcmd="${ALGORAND_BIN}/goal -r ${PRIVNET_DATA}"
 
-$gcmd network start
+${gcmd} network start

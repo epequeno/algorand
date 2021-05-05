@@ -8,4 +8,4 @@ PRIVNET_DATA="${PRIVNET_HOME}/net1"
 
 gcmd="${ALGORAND_BIN}/goal -r ${PRIVNET_DATA}"
 
-$gcmd network create -n private -t "${PRIVNET_HOME}/my_network_template.json"
+${gcmd} network create -n private -t "${PRIVNET_HOME}/my_network_template.json"
