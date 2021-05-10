@@ -8,8 +8,8 @@ import (
 )
 
 func main() {
-	algodAddress := os.Getenv("ALGOD_ADDRESS")
-	algodToken := os.Getenv("ALGOD_TOKEN")
+	algodAddress := os.Getenv("SANDBOX_ADDRESS")
+	algodToken := os.Getenv("SANDBOX_TOKEN")
 	if algodAddress == "" || algodToken == "" {
 		fmt.Println("env vars are not set!")
 		return

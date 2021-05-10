@@ -5,13 +5,18 @@ fn main() {
     let mut algod_address: String = String::new();
     let mut algod_token: String = String::new();
     for (k, v) in env::vars() {
-        if k == "ALGOD_ADDRESS" {
+        if k == "SANDBOX_ADDRESS" {
             algod_address = v.clone();
         }
 
-        if k == "ALGOD_TOKEN" {
+        if k == "SANDBOX_TOKEN" {
             algod_token = v.clone();
         }
+    }
+
+    if algod_address.is_empty() || algod_token.is_empty() {
+        println!("env vars not set!");
+        return;
     }
 
     let algod_client = AlgodClient::new(&algod_address, &algod_token);
