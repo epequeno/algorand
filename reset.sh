@@ -8,5 +8,6 @@ fi
 
 rm -rf "${ALGORAND_BIN}"
 rm -rf "${ROOT_DIR}/testnet/data"
+rm -rf "${ROOT_DIR}/privnet/net1"
 rm ./updater
 rm ./update.sh
