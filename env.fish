@@ -7,3 +7,7 @@ set -gx TESTNET_DATA $ROOT_DIR/testnet/data
 function gcmd
 	$ALGORAND_BIN/goal $argv
 end
+
+function goal
+	$ALGORAND_BIN/goal $argv
+end
