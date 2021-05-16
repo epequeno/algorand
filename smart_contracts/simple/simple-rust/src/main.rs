@@ -62,7 +62,7 @@ fn get_val(key: String) -> String {
 }
 
 impl AlgodEnvironment {
-    fn to_config(&self) -> EnvironmentConfig {
+    fn get_config(&self) -> EnvironmentConfig {
         let network: String = match self {
             AlgodEnvironment::Sandbox => "SANDBOX".into(),
             AlgodEnvironment::PrivNet => "PRIVNET".into(),
@@ -88,7 +88,7 @@ fn get_balance(client: &AlgodClient, address: &str) -> u64 {
 }
 
 fn main() {
-    let algod_config: EnvironmentConfig = AlgodEnvironment::Sandbox.to_config();
+    let algod_config: EnvironmentConfig = AlgodEnvironment::Sandbox.get_config();
 
     // build clients
     let algod_client: AlgodClient = Algod::new()
@@ -111,7 +111,7 @@ fn main() {
     // compile teal program
     let contract = algod_client.compile_teal(TEAL_PROGRAM.into()).unwrap();
 
-    // first we obtain a handle to our wallet
+    // obtain a handle to our wallet
     let list_response = kmd.list_wallets().unwrap();
     let wallet_id = match list_response
         .wallets
@@ -177,7 +177,21 @@ fn main() {
 
     println!("alice->contract transaction id: {}\n", send_response.tx_id);
 
-    println!("ending balances");
+    // wait for transaction to finalize
+    loop {
+        let txn_state = algod_client
+            .pending_transaction_with_id(&send_response.tx_id)
+            .unwrap();
+
+        if let Some(_) = txn_state.confirmed_round {
+            break;
+        }
+
+        println!("txn not confirmed; sleep 2s...");
+        std::thread::sleep(std::time::Duration::from_secs(2));
+    }
+
+    println!("\nbalances after contract funded");
     println!("{} alice", get_balance(&algod_client, &alice.address));
     println!("{} bob", get_balance(&algod_client, &bob.address));
     println!("{} contract", get_balance(&algod_client, &contract.hash));
