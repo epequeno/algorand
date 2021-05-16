@@ -80,6 +80,13 @@ impl AlgodEnvironment {
     }
 }
 
+fn get_balance(client: &AlgodClient, address: &str) -> u64 {
+    client
+        .account_information(address)
+        .unwrap()
+        .amount_without_pending_rewards
+}
+
 fn main() {
     let algod_config: EnvironmentConfig = AlgodEnvironment::Sandbox.to_config();
 
@@ -133,16 +140,15 @@ fn main() {
     let alice: &Account = &accounts[0];
     let bob: &Account = &accounts[1];
 
-    println!("alice address: {}", alice.address);
-    println!("bob address: {}", bob.address);
-    println!("contract address: {}", contract.hash);
+    println!("addresses");
+    println!("alice {}", alice.address);
+    println!("bob {}", bob.address);
+    println!("contract {}\n", contract.hash);
 
-    let contract_starting_balance = algod_client
-        .account_information(&contract.hash)
-        .unwrap()
-        .amount;
-
-    println!("contract starting balance: {}\n", contract_starting_balance);
+    println!("starting balances");
+    println!("{} alice", get_balance(&algod_client, &alice.address));
+    println!("{} bob", get_balance(&algod_client, &bob.address));
+    println!("{} contract\n", get_balance(&algod_client, &contract.hash));
 
     let params = algod_client.transaction_params().unwrap();
 
@@ -169,22 +175,10 @@ fn main() {
         .broadcast_raw_transaction(&sign_response.signed_transaction)
         .unwrap();
 
-    println!(
-        "alice->contract transaction id: {}\n",
-        send_response.tx_id
-    );
+    println!("alice->contract transaction id: {}\n", send_response.tx_id);
 
-    let contract_pending_txns = algod_client
-        .pending_transactions_for(&contract.hash, 0)
-        .unwrap()
-        .total_transactions;
-
-    println!("contract pending txns: {}", contract_pending_txns);
-
-    let contract_ending_balance = algod_client
-        .account_information(&contract.hash)
-        .unwrap()
-        .amount;
-
-    println!("contract ending balance: {}\n", contract_ending_balance);
+    println!("ending balances");
+    println!("{} alice", get_balance(&algod_client, &alice.address));
+    println!("{} bob", get_balance(&algod_client, &bob.address));
+    println!("{} contract", get_balance(&algod_client, &contract.hash));
 }
