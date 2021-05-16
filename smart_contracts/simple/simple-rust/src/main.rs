@@ -195,4 +195,24 @@ fn main() {
     println!("{} alice", get_balance(&algod_client, &alice.address));
     println!("{} bob", get_balance(&algod_client, &bob.address));
     println!("{} contract", get_balance(&algod_client, &contract.hash));
+
+    // Next step is to provide an argument (password) to the contract account so that it will
+    // release its funds to the `close-to` address:
+    // ${gcmd} clerk send \
+    // --amount 30000 \
+    // --from-program ./passphrase.teal \
+    // --close-to "${bob}" \
+    // --to "${bob}" \
+    // --argb64 "$(echo -n ${PASSPHRASE} | base64 -w 0)" \
+    // --out out.txn
+    //
+    // There doesn't appear to be a way to do this currently using this (or any) rust SDK.
+    // see: https://github.com/manuelmauro/algonaut/issues/21
+    //
+    // In order to proceed we'd need to shell out to `goal` as it is able to perform this action.
+    // The point of this exercise is to test/evaluate the SDK so calling out to `goal` isn't 
+    // desirable. 
+    //
+    // I'll stop here and consider this implimentation blocked until the SDKs are futher developed.
+
 }

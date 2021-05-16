@@ -13,16 +13,19 @@ func (s *TealCompile) Do(ctx context.Context, headers ...*common.Header) (respon
 
 # SDK review
 
-|SDK|Can Compile teal|
-|---|---|
-|[algo_rust_sdk v1.0.3](https://docs.rs/algo_rust_sdk/1.0.3/algo_rust_sdk/algod/struct.AlgodClient.html)|No
-|[algonaut_client v0.2.0](https://docs.rs/algonaut_client/0.2.0/algonaut_client/algod/v2/struct.Client.html#method.compile_teal)|Yes
+|SDK|Active Development|Can Compile teal|LogicSig|
+|---|---|---|---|
+|[pawanjay176/rust-algorand-sdk v0.1.0](https://github.com/pawanjay176/rust-algorand-sdk)|No|No|No
+|[mraof/rust-algorand-sdk v0.1.0](https://github.com/mraof/rust-algorand-sdk)|No|No|No
+|[KBryan/algo_rust_sdk v1.0.3](https://docs.rs/algo_rust_sdk/1.0.3/algo_rust_sdk/algod/struct.AlgodClient.html)|Yes?|No|No
+|[manuelmauro/algonaut_client v0.2.0](https://docs.rs/algonaut_client/0.2.0/algonaut_client/algod/v2/struct.Client.html#method.compile_teal)|Yes|Yes|No
 
-This example uses `algonaut_client` in order to avoid calling out to `goal`
+
+This example uses [algonaut](https://crates.io/crates/algonaut).
 
 # Using goal
 
-For reference, this function can be used to call out to `goal` to do the compilation:
+For reference, this function can be used to call out to `goal` to do any work the SDK is unable to do:
 
 ```rust
 use std::env;
@@ -59,3 +62,10 @@ fn main() {
 }
 ```
 
+# Results
+
+The `algonaut` project seems to be the best option, it is the most fully-featured and as of 2021-05-16 there has been recent and consistent activity on the github project. 
+
+The number of contributers is small (<5) and there doesn't appear to be a roadmap or other way to determine which features are in development and their progress status.
+
+Because my interest is focused on smart contracts, rust does not seem like a production ready option because the available SDKs are not yet capable enough.
