@@ -17,7 +17,7 @@ func (s *TealCompile) Do(ctx context.Context, headers ...*common.Header) (respon
 |---|---|---|---|
 |[pawanjay176/rust-algorand-sdk v0.1.0](https://github.com/pawanjay176/rust-algorand-sdk)|No|No|No
 |[mraof/rust-algorand-sdk v0.1.0](https://github.com/mraof/rust-algorand-sdk)|No|No|No
-|[KBryan/algo_rust_sdk v1.0.3](https://docs.rs/algo_rust_sdk/1.0.3/algo_rust_sdk/algod/struct.AlgodClient.html)|Yes?|No|No
+|[KBryan/algo_rust_sdk v1.0.3](https://docs.rs/algo_rust_sdk/1.0.3/algo_rust_sdk/algod/struct.AlgodClient.html)|No|No|No
 |[manuelmauro/algonaut_client v0.2.0](https://docs.rs/algonaut_client/0.2.0/algonaut_client/algod/v2/struct.Client.html#method.compile_teal)|Yes|Yes|No
 
 
