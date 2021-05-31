@@ -2,8 +2,9 @@ use algonaut_client::algod::v2::Client as AlgodClient;
 use algonaut_client::indexer::v2::message::{Account, QueryAccount};
 use algonaut_client::indexer::v2::Client as IndexerClient;
 use algonaut_client::{Algod, Indexer, Kmd};
-use algonaut_core::MicroAlgos;
-use algonaut_transaction::{Pay, Txn};
+use algonaut_core::{Address, LogicSignature, MicroAlgos};
+use algonaut_transaction::{Pay, SignedTransaction, Txn};
+use data_encoding::BASE64;
 use std::env;
 use std::process::exit;
 
@@ -89,6 +90,7 @@ fn get_balance(client: &AlgodClient, address: &str) -> u64 {
 
 fn main() {
     let algod_config: EnvironmentConfig = AlgodEnvironment::Sandbox.get_config();
+    let passphrase = get_val("PASSPHRASE".to_string());
 
     // build clients
     let algod_client: AlgodClient = Algod::new()
@@ -187,14 +189,17 @@ fn main() {
             break;
         }
 
-        println!("txn not confirmed; sleep 2s...");
+        println!(
+            "txn {}... not confirmed; sleep 2s...",
+            &send_response.tx_id[..5]
+        );
         std::thread::sleep(std::time::Duration::from_secs(2));
     }
 
     println!("\nbalances after contract funded");
     println!("{} alice", get_balance(&algod_client, &alice.address));
     println!("{} bob", get_balance(&algod_client, &bob.address));
-    println!("{} contract", get_balance(&algod_client, &contract.hash));
+    println!("{} contract\n", get_balance(&algod_client, &contract.hash));
 
     // Next step is to provide an argument (password) to the contract account so that it will
     // release its funds to the `close-to` address:
@@ -205,14 +210,69 @@ fn main() {
     // --to "${bob}" \
     // --argb64 "$(echo -n ${PASSPHRASE} | base64 -w 0)" \
     // --out out.txn
-    //
-    // There doesn't appear to be a way to do this currently using this (or any) rust SDK.
-    // see: https://github.com/manuelmauro/algonaut/issues/21
-    //
-    // In order to proceed we'd need to shell out to `goal` as it is able to perform this action.
-    // The point of this exercise is to test/evaluate the SDK so calling out to `goal` isn't 
-    // desirable. 
-    //
-    // I'll stop here and consider this implimentation blocked until the SDKs are futher developed.
+    println!("closing contract by providing password...");
+    let passphrase_arg = passphrase.as_bytes().to_owned();
+    let program_bytes = BASE64.decode(contract.result.as_bytes()).unwrap();
+    let lsig = LogicSignature {
+        logic: program_bytes,
+        sig: None,
+        msig: None,
+        args: vec![passphrase_arg],
+    };
 
+    let contract_address: Address = contract.hash.parse().unwrap();
+    let bob_address: Address = bob.address.parse().unwrap();
+
+    let params = algod_client.transaction_params().unwrap();
+
+    let t = Txn::new()
+        .sender(contract_address)
+        .first_valid(params.last_round)
+        .last_valid(params.last_round + 10)
+        .genesis_id(params.genesis_id)
+        .genesis_hash(params.genesis_hash)
+        .fee(MicroAlgos(10_000))
+        .payment(
+            Pay::new()
+                .amount(MicroAlgos(30_000))
+                .to(bob_address)
+                .close_remainder_to(bob_address)
+                .build(),
+        )
+        .build();
+
+    let signed_transaction = SignedTransaction {
+        sig: None,
+        multisig: None,
+        logicsig: Some(lsig),
+        transaction: t,
+        transaction_id: "".to_owned(),
+    };
+
+    let transaction_bytes = rmp_serde::to_vec_named(&signed_transaction).unwrap();
+    let send_response = algod_client
+        .broadcast_raw_transaction(&transaction_bytes)
+        .unwrap();
+
+    // wait for transaction to finalize
+    loop {
+        let txn_state = algod_client
+            .pending_transaction_with_id(&send_response.tx_id)
+            .unwrap();
+
+        if let Some(_) = txn_state.confirmed_round {
+            break;
+        }
+
+        println!(
+            "txn {}... not confirmed; sleep 2s...",
+            &send_response.tx_id[..5]
+        );
+        std::thread::sleep(std::time::Duration::from_secs(2));
+    }
+
+    println!("\nbalances after contract closed");
+    println!("{} alice", get_balance(&algod_client, &alice.address));
+    println!("{} bob", get_balance(&algod_client, &bob.address));
+    println!("{} contract", get_balance(&algod_client, &contract.hash));
 }
