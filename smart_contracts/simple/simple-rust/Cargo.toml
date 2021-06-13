@@ -14,3 +14,4 @@ algonaut_encoding = { path = "/home/steven/code/algonaut/algonaut_encoding" }
 algonaut_transaction = { path = "/home/steven/code/algonaut/algonaut_transaction" }
 data-encoding = "2.3.1"
 rmp-serde = "0.15"
+tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"] }
