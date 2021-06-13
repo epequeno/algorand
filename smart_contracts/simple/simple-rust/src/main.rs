@@ -8,8 +8,7 @@ use algonaut_client::indexer::v2::message::{Account, QueryAccount};
 use algonaut_client::indexer::v2::Client as IndexerClient;
 use algonaut_client::{Algod, Indexer, Kmd};
 use algonaut_core::{Address, ApiSignedLogic, MicroAlgos};
-use algonaut_transaction::api_transaction::ApiTransaction;
-use algonaut_transaction::{ApiSignedTransaction, Pay, Txn};
+use algonaut_transaction::{api_transaction::ApiTransaction, ApiSignedTransaction, Pay, Txn};
 use data_encoding::BASE64;
 use std::env;
 use std::process::exit;
@@ -136,16 +135,18 @@ async fn main() {
     let init_response = kmd.init_wallet_handle(&wallet_id, "").await.unwrap();
     let wallet_handle_token = init_response.wallet_handle_token;
 
-    // for this example, arbitrarily choose the first 2 accounts returned using deafult network
+    // for this example, arbitrarily choose 2 accounts returned using deafult network
     // config. make sure this way of determining accounts makes sense for the environment.
+    // IMPORTANT: using the 0th result from this response will NOT work. Confirm the addresses that
+    // alice and bob get are in the list returned from `goal account list`
     let accounts: Vec<Account> = indexer_client
         .accounts(&QueryAccount::default())
         .await
         .unwrap()
         .accounts;
 
-    let alice: &Account = &accounts[0];
-    let bob: &Account = &accounts[1];
+    let alice: &Account = &accounts[1];
+    let bob: &Account = &accounts[2];
 
     println!("addresses");
     println!("alice {}", alice.address);
