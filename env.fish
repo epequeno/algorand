@@ -31,3 +31,7 @@ end
 function goal
 	$ALGORAND_BIN/goal $argv
 end
+
+function algokey
+	$ALGORAND_BIN/algokey $argv
+end
