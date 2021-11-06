@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
 from os import environ
+import json
 
 # 3rd party
 import pyteal
@@ -16,10 +17,9 @@ class Environment(Enum):
     TESTNET = auto()
     MAINNET = auto()
 
-    def get_config(self):
-        if self == Environment.SANDBOX:
-            env = "SANDBOX"
-        elif self == Environment.PRIVNET:
+    def config_from_env(self):
+        env = "SANDBOX"  # default
+        if self == Environment.PRIVNET:
             env = "PRIVNET"
         elif self == Environment.TESTNET:
             env = "TESTNET"
@@ -34,6 +34,10 @@ class Environment(Enum):
             indexer_address=environ[f"{env}_INDEXER_ADDRESS"],
         )
 
+    def make_algod_client(self):
+        env = self.config_from_env()
+        return algod.AlgodClient(env.algod_token, env.algod_address)
+
 
 @dataclass
 class EnvironmentConfig:
@@ -45,9 +49,8 @@ class EnvironmentConfig:
 
 
 def main():
-    env = Environment.SANDBOX.get_config()
-    algod_client = algod.AlgodClient(env.algod_token, env.algod_address)
-    print(algod_client.status())
+    algod_client = Environment.SANDBOX.make_algod_client()
+    print(json.dumps(algod_client.status()))
 
 
 if __name__ == "__main__":
