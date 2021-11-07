@@ -7,6 +7,7 @@ Implementations are in their own directories:
 - `./simple-go`
 - `./simple-goal`
 - `./simple-rust`
+- `./simple-python`
 
 ## Contract
 
