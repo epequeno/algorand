@@ -1,9 +1,13 @@
+"""
+pyteal/algosdk implementation of https://developer.algorand.org/tutorials/writing-simple-smart-contract/
+"""
 # stdlib
 from dataclasses import dataclass
 from enum import Enum, auto
 from os import environ
 from typing import Optional
 import base64
+from contextlib import contextmanager
 
 # 3rd party
 from pyteal import (
@@ -41,20 +45,20 @@ class Environment(Enum):
     MAINNET = auto()
 
     def config_from_env(self):
-        env = "SANDBOX"  # default
+        env_name = "SANDBOX"  # default
         if self == Environment.PRIVNET:
-            env = "PRIVNET"
+            env_name = "PRIVNET"
         elif self == Environment.TESTNET:
-            env = "TESTNET"
+            env_name = "TESTNET"
         elif self == Environment.MAINNET:
-            env = "MAINNET"
+            env_name = "MAINNET"
 
         return EnvironmentConfig(
-            algod_address=environ[f"{env}_ALGOD_ADDRESS"],
-            algod_token=environ[f"{env}_ALGOD_TOKEN"],
-            kmd_address=environ[f"{env}_KMD_ADDRESS"],
-            kmd_token=environ[f"{env}_KMD_TOKEN"],
-            indexer_address=environ[f"{env}_INDEXER_ADDRESS"],
+            algod_address=environ[f"{env_name}_ALGOD_ADDRESS"],
+            algod_token=environ[f"{env_name}_ALGOD_TOKEN"],
+            kmd_address=environ[f"{env_name}_KMD_ADDRESS"],
+            kmd_token=environ[f"{env_name}_KMD_TOKEN"],
+            indexer_address=environ[f"{env_name}_INDEXER_ADDRESS"],
         )
 
     def _get_env(self):
@@ -116,7 +120,51 @@ contract:
     print("-" * 80, end="\n\n")
 
 
-def generate_pyteal():
+@dataclass
+class WalletHandle:
+    client: kmd.KMDClient
+    wallet_id: str
+    wallet_password: str
+    _token: Optional[str] = None
+
+    @staticmethod
+    def new(client: kmd.KMDClient, wallet_id: str, wallet_password: str):
+        print("initiating handle")
+        tok = client.init_wallet_handle(wallet_id, wallet_password)
+        return WalletHandle(
+            client=client,
+            wallet_id=wallet_id,
+            wallet_password=wallet_password,
+            _token=tok,
+        )
+
+    @property
+    def token(self):
+        try:
+            self.client.get_wallet(self._token)
+        except:
+            new_tok = self.client.init_wallet_handle(
+                self.wallet_id, self.wallet_password
+            )
+            self._token = new_tok
+
+        return self._token
+
+    def release(self):
+        print("releasing handle")
+        self.client.release_wallet_handle(self.token)
+
+
+@contextmanager
+def handle(*args, **kwargs):
+    handler = args[0]
+    try:
+        yield handler
+    finally:
+        handler.release()
+
+
+def approval():
     return And(
         Txn.fee() <= Int(10_000),
         Len(Arg(0)) == Int(73),
@@ -128,24 +176,23 @@ def generate_pyteal():
 
 if __name__ == "__main__":
     # make clients
-    algod_client = Environment.SANDBOX.make_algod_client()
-    indexer_client = Environment.SANDBOX.make_indexer_client()
-    kmd_client = Environment.SANDBOX.make_kmd_client()
+    environment = Environment.SANDBOX
+    algod_client = environment.make_algod_client()
+    indexer_client = environment.make_indexer_client()
+    kmd_client = environment.make_kmd_client()
+
+    # helper alias
+    sp = algod_client.suggested_params
 
     # get secret from env
     passphrase = environ.get("PASSPHRASE")
-
-    # get handle to wallet for signing later
-    wallets = kmd_client.list_wallets()
-    default_wallet = wallets[0]
-    wallet_handle = kmd_client.init_wallet_handle(default_wallet["id"], "")
 
     # get account addresses from algod genesis.json
     alice = environ["ALICE_ADDRESS"]
     bob = environ["BOB_ADDRESS"]
 
     # create contract
-    teal_source = compileTeal(generate_pyteal(), mode=Mode.Signature, version=2)
+    teal_source = compileTeal(approval(), mode=Mode.Signature, version=2)
     compilation_result = algod_client.compile(teal_source)
     contract = compilation_result["hash"]
     contract_bytes = base64.b64decode(compilation_result["result"])
@@ -153,9 +200,15 @@ if __name__ == "__main__":
     print_status(title="starting balances")
 
     # alice funds contract
-    params = algod_client.suggested_params()
-    txn = PaymentTxn(amt=1_000_000, sender=alice, sp=params, receiver=contract)
-    signed_txn = kmd_client.sign_transaction(wallet_handle, "", txn)
+    txn = PaymentTxn(amt=1_000_000, sender=alice, sp=sp(), receiver=contract)
+
+    # get handle to wallet for signing later
+    wallets = kmd_client.list_wallets()
+    wallet_id = wallets[0]["id"]
+    wh = WalletHandle.new(client=kmd_client, wallet_id=wallet_id, wallet_password="")
+    with handle(wh) as h:
+        signed_txn = kmd_client.sign_transaction(h.token, h.wallet_password, txn)
+
     txn_id = algod_client.send_transaction(signed_txn)
 
     wait_for_confirmation(algod_client, txn_id)
@@ -169,9 +222,8 @@ if __name__ == "__main__":
         args=[bytes(passphrase, encoding="utf8")],
     )
 
-    params = algod_client.suggested_params()
     txn = PaymentTxn(
-        amt=0, sender=contract, sp=params, receiver=bob, close_remainder_to=bob
+        amt=0, sender=contract, sp=sp(), receiver=bob, close_remainder_to=bob
     )
 
     lsig_txn = LogicSigTransaction(transaction=txn, lsig=lsig)
