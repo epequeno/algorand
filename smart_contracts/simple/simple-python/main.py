@@ -100,20 +100,24 @@ def wait_for_confirmation(client, txid):
     return txinfo
 
 
+def truncate_address(address: str):
+    return f"{address[:5]}...{address[-5:]}"
+
+
 def print_status(title: str):
     print(title)
     print("-" * 80)
     msg = f"""\
 alice:
-  address: {alice[:5]}...{alice[-5:]}
+  address: {truncate_address(alice)}
   balance: {get_balance(alice)}
 
 bob:
-  address: {bob[:5]}...{bob[-5:]}
+  address: {truncate_address(bob)}
   balance: {get_balance(bob)}
 
 contract:
-  address: {contract[:5]}...{contract[-5:]}
+  address: {truncate_address(contract)}
   balance: {get_balance(contract)}
 """
     print(msg, end="")
@@ -129,7 +133,6 @@ class WalletHandle:
 
     @staticmethod
     def new(client: kmd.KMDClient, wallet_id: str, wallet_password: str):
-        print("initiating handle")
         tok = client.init_wallet_handle(wallet_id, wallet_password)
         return WalletHandle(
             client=client,
@@ -151,7 +154,6 @@ class WalletHandle:
         return self._token
 
     def release(self):
-        print("releasing handle")
         self.client.release_wallet_handle(self.token)
 
 
@@ -202,12 +204,12 @@ if __name__ == "__main__":
     # alice funds contract
     txn = PaymentTxn(amt=1_000_000, sender=alice, sp=sp(), receiver=contract)
 
-    # get handle to wallet for signing later
+    # get wallet handle and sign txn
     wallets = kmd_client.list_wallets()
     wallet_id = wallets[0]["id"]
     wh = WalletHandle.new(client=kmd_client, wallet_id=wallet_id, wallet_password="")
     with handle(wh) as h:
-        signed_txn = kmd_client.sign_transaction(h.token, h.wallet_password, txn)
+        signed_txn = h.client.sign_transaction(h.token, h.wallet_password, txn)
 
     txn_id = algod_client.send_transaction(signed_txn)
 
