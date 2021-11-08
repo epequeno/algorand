@@ -125,7 +125,7 @@ contract:
 
 
 @dataclass
-class WalletHandle:
+class Handler:
     client: kmd.KMDClient
     wallet_id: str
     wallet_password: str
@@ -134,7 +134,7 @@ class WalletHandle:
     @staticmethod
     def new(client: kmd.KMDClient, wallet_id: str, wallet_password: str):
         tok = client.init_wallet_handle(wallet_id, wallet_password)
-        return WalletHandle(
+        return Handler(
             client=client,
             wallet_id=wallet_id,
             wallet_password=wallet_password,
@@ -158,8 +158,10 @@ class WalletHandle:
 
 
 @contextmanager
-def handle(*args, **kwargs):
-    handler = args[0]
+def handle(client: kmd.KMDClient, wallet_id: str, wallet_password: str):
+    handler = Handler.new(
+        client=client, wallet_id=wallet_id, wallet_password=wallet_password
+    )
     try:
         yield handler
     finally:
@@ -207,8 +209,7 @@ if __name__ == "__main__":
     # get wallet handle and sign txn
     wallets = kmd_client.list_wallets()
     wallet_id = wallets[0]["id"]
-    wh = WalletHandle.new(client=kmd_client, wallet_id=wallet_id, wallet_password="")
-    with handle(wh) as h:
+    with handle(client=kmd_client, wallet_id=wallet_id, wallet_password="") as h:
         signed_txn = h.client.sign_transaction(h.token, h.wallet_password, txn)
 
     txn_id = algod_client.send_transaction(signed_txn)
