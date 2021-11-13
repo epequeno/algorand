@@ -1,8 +1,11 @@
+// implementation of https://developer.algorand.org/tutorials/writing-simple-smart-contract/
 package main
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/algorand/go-algorand-sdk/client/kmd"
@@ -79,20 +82,30 @@ func main() {
 	}
 
 	// create contract account
-	dat, err := os.ReadFile("./passphrase.teal")
+	file, err := os.Open("./passphrase.teal")
 	if err != nil {
 		fmt.Printf("failed to read teal file: %s\n", err)
 		return
 	}
-	compiledTeal, err := algodClient.TealCompile(dat).Do(ctx)
+	defer file.Close()
+	tealFile, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Printf("failed to teal file: %s\n", err)
+		return
+	}
+	compiledTeal, err := algodClient.TealCompile(tealFile).Do(ctx)
 	if err != nil {
 		fmt.Printf("failed to compile teal: %s\n", err)
 		return
 	}
-	args := [][]byte{
-		[]byte(os.Getenv("PASSPHRASE")),
+	program, err := base64.StdEncoding.DecodeString(compiledTeal.Result)
+	if err != nil {
+		fmt.Printf("failed to b64 compiled teal: %s\n", err)
+		return
 	}
-	lsig := crypto.MakeLogicSigAccountEscrow([]byte(compiledTeal.Result), args)
+	args := make([][]byte, 1)
+	args[0] = []byte(os.Getenv("PASSPHRASE"))
+	lsig := crypto.MakeLogicSigAccountEscrow(program, args)
 	lsigAddress, err := lsig.Address()
 	if err != nil {
 		fmt.Printf("failed to get lsig address: %s\n", err)
@@ -145,7 +158,7 @@ func main() {
 		return
 	}
 	fmt.Println("alice funds contract")
-	waitForConfirmation(*algodClient, txid)	
+	waitForConfirmation(*algodClient, txid)
 	print_status(*algodClient, alice, bob, lsigAddress.String())
 
 	// close to bob
